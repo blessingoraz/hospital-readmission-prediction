@@ -2,7 +2,7 @@
 A machine learning API that predicts whether a hospitalized diabetic patient is likely to be readmitted within 30 days.
 Built with Random Forest, served via FastAPI, containerized with Docker, and deployed to Render.
 
-# Problem Description
+## Problem Description
 
 Hospital readmissions are a critical healthcare concern — they increase costs, strain resources, and often reflect gaps in post-discharge care.
 This project predicts the likelihood of readmission for diabetic patients based on demographic and clinical features such as:
@@ -17,11 +17,13 @@ This project predicts the likelihood of readmission for diabetic patients based 
 
 The goal is to provide early warnings for high-risk patients so hospitals can plan targeted interventions and reduce preventable readmissions.
 
-# 📊 Exploratory Data Analysis (EDA)
+---
+
+## 📊 Exploratory Data Analysis (EDA)
 
 The dataset used is the Diabetes 130-US Hospitals dataset from the UCI Machine Learning Repository, containing over 100,000 hospital encounters (1999–2008).
 
-## EDA Summary
+### EDA Summary
 
 - Missing values: Columns like weight, payer_code, medical_specialty, max_glu_serum, and A1Cresult had >50% missing values and were dropped.
 
@@ -43,7 +45,9 @@ Top predictive features:
 4. number_emergency
 5. num_lab_procedures
 
-# Overview
+---
+
+## Overview
 
 This service exposes a POST /predict endpoint that returns:
 
@@ -51,7 +55,9 @@ readmitted_probability: model probability (0–1)
 
 readmitted: boolean flag using a configurable threshold (default 0.5)
 
-# Stack:
+---
+
+## Stack:
 
 - FastAPI + Uvicorn for the web API
 
@@ -61,7 +67,9 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 
 - Docker for packaging & deployment
 
-# Project Structure
+---
+
+## Project Structure
 .
 ├─ pyproject.toml
 ├─ uv.lock
@@ -77,9 +85,12 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 │  └─ predict.py             # FastAPI app (POST /predict)
 └─ README.md
 
-# Data
+---
+
+## Data
 
 Dataset: Diabetes 130-US hospitals for years 1999–2008 (UCI)
+https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008
 
 Target: Readmission within 30 days mapped to binary
 readmitted_flag = 1 if readmitted in {"<30", ">30"} else 0 (or your mapping if different)
@@ -96,7 +107,9 @@ Fill categorical NA, numeric 0.0
 
 Map age bins to mid-points (e.g., [60-70) → 65)
 
-# Model
+---
+
+## Model
 RandomForestClassifier
 
 max_depth=15, min_samples_leaf=3, class_weight='balanced', max_features='sqrt', random_state=1
@@ -105,9 +118,11 @@ DictVectorizer handles one-hot encoding inside a Pipeline
 
 Saved as models/model.bin via pickle
 
-# Quickstart
+---
 
-## Setup 
+## Quickstart
+
+### Setup 
 ```
 git clone https://github.com/blessingoraz/hospital-readmission-prediction.git
 cd readmission-prediction
@@ -154,7 +169,9 @@ curl -X POST http://localhost:9696/predict \
   }'
 ```
 
-# Docker
+---
+
+## Docker
 
 ```
 
@@ -166,7 +183,9 @@ docker run -it --rm -p 9696:9696 readmit
 
 ```
 
-# API
+---
+
+## API
 `POST /predict``
 Request body (subset shown; FastAPI docs show full schema):
 
@@ -188,7 +207,7 @@ Request body (subset shown; FastAPI docs show full schema):
 }
 ```
 
-# Response
+## Response
 ```
 {
   "readmitted_probability": 0.41,
