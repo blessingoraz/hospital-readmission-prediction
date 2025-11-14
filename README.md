@@ -1,59 +1,126 @@
 # Hospital Readmission Prediction
-A machine learning API that predicts whether a hospitalized diabetic patient is likely to be readmitted within 30 days.
-Built with Random Forest, served via FastAPI, containerized with Docker, and deployed to Render.
+*A Machine Learning API for Predicting 30-Day Readmission Risk Among Diabetic Patients* 
+
+This project builds a Random Forest–based predictive model, wraps it inside a FastAPI web service, packages it using Docker, and deploys it on Render.
+It provides real-time readmission probability estimates to support better post-discharge planning and reduce preventable readmissions.
+
 
 ## Problem Description
 
 Hospital readmissions are a critical healthcare concern — they increase costs, strain resources, and often reflect gaps in post-discharge care.
-This project predicts the likelihood of readmission for diabetic patients based on demographic and clinical features such as:
+By predicting a patient’s 30-day readmission risk before discharge, hospitals can:
+- Prioritize high-risk patients
+- Improve follow-up care
+- Reduce strain on clinical resources
+- Lower healthcare costs
 
+This model uses demographic, clinical, and hospitalization-related features such as:
 - Length of hospital stay
-
 - Number of medications and procedures
-
 - Previous inpatient or emergency visits
-
 - Prescribed diabetes medications
 
+The output is a probability of readmission and a binary risk label.
+
+### Goal
 The goal is to provide early warnings for high-risk patients so hospitals can plan targeted interventions and reduce preventable readmissions.
+
+---
+
+## Dataset
+
+Source: Diabetes 130-US Hospitals dataset
+Provider: UCI Machine Learning Repository
+Link: https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008
+
+- ~100,000 hospital encounters
+- Years: 1999–2008
+- Patients diagnosed with diabetes
+- 50+ features (demographics, medications, lab results, diagnoses, visit counts)
+
+**Target**: Readmission within 30 days mapped to binary
+`readmitted_flag = 1 if readmitted in {"<30", ">30"} else 0`
 
 ---
 
 ## 📊 Exploratory Data Analysis (EDA)
 
-The dataset used is the Diabetes 130-US Hospitals dataset from the UCI Machine Learning Repository, containing over 100,000 hospital encounters (1999–2008).
-
 ### EDA Summary
 
-- Missing values: Columns like weight, payer_code, medical_specialty, max_glu_serum, and A1Cresult had >50% missing values and were dropped.
+#### Missing values: 
+- Columns like weight, payer_code, medical_specialty, max_glu_serum, and A1Cresult had >50% missing values and were dropped.
 
-- Categorical handling: All string columns were lowercased and replaced spaces with underscores.
+#### Categorical handling: 
+- All string columns were lowercased and replaced spaces with underscores.
+- Categorical missing values were filled with 'NA'
 
-- Numerical missing values: Filled with 0.0; categorical with 'NA'.
+#### Numerical handling
+- Numerical missing values were filled with 0.0
 
+#### Age Encoding
 - Age encoding: Age bins ([50-60)) mapped to midpoints (e.g. 55).
 
-- Target variable: Converted readmitted → 1 if <30 else 0.
 
-- Readmission rate: ~11% (imbalanced dataset).
-
-- Feature importance (RandomForest):
-Top predictive features:
-1. number_inpatient
-2. time_in_hospital
-3. num_medications
-4. number_emergency
-5. num_lab_procedures
+#### Top predictive features(RandomForest):
+ - number_inpatient
+ - time_in_hospital
+ - num_medications
+ - number_emergency
+ - num_lab_procedures
 
 ---
 
-## Overview
+## Model Development
+Primary model: RandomForestClassifier
 
-This service exposes a POST /predict endpoint that returns:
+```
+max_depth = 15
+min_samples_leaf = 3
+class_weight = "balanced"
+max_features = "sqrt"
+random_state = 1
+```
 
-readmitted_probability: model probability (0–1)
+### Additional algorithms tested:
 
-readmitted: boolean flag using a configurable threshold (default 0.5)
+- Logistic Regression
+
+- XGBoost (early trials)
+
+
+### Metrics
+
+| Model               | AUC (val)  | Precision  | Recall  | F1    | 
+| ------------------- | ---------- | ---------- | ------- | ----- | 
+| Logistic Regression | 0.633      | 0.571      | 0.010   | 0.021 | 
+| RandomForest (v1)   | 0.633      | 0.170      | 0.505   | 0.254 | 
+| XGBoost (trial)     | 0.637      | 0.786      | 0.005   | 0.010 | 
+
+**Interpretation:**
+
+RandomForest provides the best balance overall.
+
+Very low recall in Logistic Regression and XGBoost → sensitive to class imbalance.
+
+---
+
+
+
+## API Overview
+
+This service exposes a `POST /predict` endpoint that returns:
+**Response**
+
+```
+{
+  "readmitted_probability": 0.41,
+  "readmitted": false,
+  "threshold": 0.5
+}
+```
+
+FastAPI automatically generates docs at:
+👉 http://localhost:9696/docs
 
 ---
 
@@ -67,9 +134,8 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 
 - Docker for packaging & deployment
 
----
 
-## Project Structure
+### Project Structure
 ```
 .
 ├─ pyproject.toml
@@ -87,71 +153,69 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 └─ README.md
 
 ```
----
-
-## Data
-
-Dataset: Diabetes 130-US hospitals for years 1999–2008 (UCI)
-https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008
-
-Target: Readmission within 30 days mapped to binary
-readmitted_flag = 1 if readmitted in {"<30", ">30"} else 0 (or your mapping if different)
-
-Basic cleaning:
-
-Replace '?' → NaN
-
-Drop sparse columns (e.g., weight, payer_code, medical_specialty, max_glu_serum, A1Cresult)
-
-Lowercase + underscore categorical values
-
-Fill categorical NA, numeric 0.0
-
-Map age bins to mid-points (e.g., [60-70) → 65)
 
 ---
 
-## Model
-RandomForestClassifier
-
-max_depth=15, min_samples_leaf=3, class_weight='balanced', max_features='sqrt', random_state=1
-
-DictVectorizer handles one-hot encoding inside a Pipeline
-
-Saved as models/model.bin via pickle
-
----
-
-## Quickstart
-
-### Setup 
+## Installation & Setup 
 ```
 git clone https://github.com/blessingoraz/hospital-readmission-prediction.git
-cd readmission-prediction
+cd hospital-readmission-prediction
 
 # install uv if needed
 pip install uv
 
 # install deps from pyproject + uv.lock
 uv sync
+
 # run anything inside the env:
 uv run python -V
 ```
 
-## Run app locally
+### Run app locally
 
 ```
 # from repo root
 uv run uvicorn src.predict:app --host 0.0.0.0 --port 9696
-# open docs
-# http://localhost:9696/docs
+```
+
+---
+
+## Docker Usage
+
+```
+# build
+docker build -t readmit:latest .
+
+# run
+docker run -it --rm -p 9696:9696 readmit
+
+# test 
+curl http://localhost:9696/predict
 
 ```
 
-## Test Request
+---
+
+## Deployment to Render
+
+- Push repo (with Dockerfile) to GitHub
+
+- On Render:
+
+  - New → Web Service → Use Docker
+
+  - Port: 9696
+
+  - Leave start command empty (Dockerfile ENTRYPOINT used)
+
+  - Test https://hospital-readmission-prediction-14p1.onrender.com/predict
+
+---
+
+
+### Test Request
 
 ```
-
 curl -X POST http://localhost:9696/predict \
   -H "Content-Type: application/json" \
   -d '{
@@ -173,23 +237,9 @@ curl -X POST http://localhost:9696/predict \
 
 ---
 
-## Docker
-
-```
-
-# build
-docker build -t readmit:latest .
-# run
-docker run -it --rm -p 9696:9696 readmit
-# test (same curl as above)
-
-```
-
----
-
-## API
-`POST /predict``
-Request body (subset shown; FastAPI docs show full schema):
+## API Usage
+Predict readmission rate: `POST /predict`
+### Request body (subset shown; FastAPI docs show full schema):
 
 ```
 {
@@ -209,38 +259,40 @@ Request body (subset shown; FastAPI docs show full schema):
 }
 ```
 
-## Response
+### Response
+
 ```
 {
   "readmitted_probability": 0.41,
-  "readmitted": false,
-  "threshold": 0.5
+  "readmitted": false
 }
 ```
 
-# Deployment
-
-- Push repo (with Dockerfile) to GitHub
-
-- On Render:
-
-  - New → Web Service → Use Docker
-
-  - Port: 9696
-
-  - Leave start command empty (Dockerfile ENTRYPOINT used)
-
-  - Test https://hospital-readmission-prediction-14p1.onrender.com/predict
 
 ---
 
-# Metrics
+## Limitations
 
-| Model               | AUC (val)  | Precision  | Recall  | F1    | 
-| ------------------- | ---------- | ---------- | ------- | ----- | 
-| Logistic Regression | 0.633      | 0.571      | 0.010   | 0.021 | 
-| RandomForest (v1)   | 0.633      | 0.170      | 0.505   | 0.254 | 
-| XGBoost (trial)     | 0.637      | 0.786      | 0.005   | 0.010 | 
+- Dataset has several sparse clinical fields
+- Strong class imbalance (11% readmitted)
+- Model does not incorporate temporal patterns or ICD-9 diagnosis hierarchies
+- Limited to features available in the dataset
+
+---
+## Future Improvement
+- Improve recall
+
+- Add CI/CD pipeline with GitHub Actions
+
+- Add monitoring (latency, drift, prediction stats)
+
+- Improve metadata logging (version, parameters, training date)
+
+---
+## Acknowledgments
+- Data talks community
+
+--- 
 
 
 
