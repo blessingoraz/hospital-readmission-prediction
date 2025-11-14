@@ -70,6 +70,7 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 ---
 
 ## Project Structure
+```
 .
 ├─ pyproject.toml
 ├─ uv.lock
@@ -85,6 +86,7 @@ readmitted: boolean flag using a configurable threshold (default 0.5)
 │  └─ predict.py             # FastAPI app (POST /predict)
 └─ README.md
 
+```
 ---
 
 ## Data
@@ -230,14 +232,15 @@ Request body (subset shown; FastAPI docs show full schema):
 
   - Test https://hospital-readmission-prediction-14p1.onrender.com/predict
 
+---
 
 # Metrics
 
-| Model               | AUC (val) | Precision | Recall | F1  | Notes                 |
-| ------------------- | --------- | --------- | ------ | --- | --------------------- |
-| Logistic Regression | 0.63      | 0.53      | 0.02   | .03 | baseline              |
-| RandomForest (v1)   | 0.64      | 0.50      | 0.01   | .02 | class_weight balanced |
-| XGBoost (trial)     | 0.66      | —         | —      | —   | coming later          |
+| Model               | AUC (val)  | Precision  | Recall  | F1    | 
+| ------------------- | ---------- | ---------- | ------- | ----- | 
+| Logistic Regression | 0.633      | 0.571      | 0.010   | 0.021 | 
+| RandomForest (v1)   | 0.633      | 0.170      | 0.505   | 0.254 | 
+| XGBoost (trial)     | 0.637      | 0.786      | 0.005   | 0.010 | 
 
 
 

@@ -16,7 +16,42 @@ print(f'pandas=={pd.__version__}')
 print(f'numpy=={np.__version__}')
 print(f'sklearn=={sklearn.__version__}')
 
-#Load data and return dataframe
+# Feature engineering function
+def engineer_features(df):
+    # Create additional predictive features while preserving the original columns.
+
+    # -------- Visit history / intensity features --------
+    df['total_previous_visits'] = (
+        df['number_outpatient'] + df['number_emergency'] + df['number_inpatient']
+    )
+
+    df['had_previous_inpatient'] = (df['number_inpatient'] > 0).astype(int)
+
+    # Avoid division by zero by adding +1 to the denominator
+    df['avg_medications_per_day'] = df['num_medications'] / (df['time_in_hospital'] + 1)
+    df['procedure_to_lab_ratio'] = df['num_procedures'] / (df['num_lab_procedures'] + 1)
+
+    # -------- Medication change summaries --------
+    med_cols = [
+        'metformin','repaglinide','nateglinide','chlorpropamide','glimepiride',
+        'acetohexamide','glipizide','glyburide','tolbutamide','pioglitazone',
+        'rosiglitazone','acarbose','miglitol','troglitazone','tolazamide',
+        'examide','citoglipton','insulin'
+    ]
+
+    # Count how many meds are used at all (value != 'no')
+    df['num_medications_used'] = df[med_cols].apply(lambda row: (row != 'no').sum(), axis=1)
+
+    # Count meds with dose adjustment (value in {'up','down'})
+    df['num_adjusted_medications'] = df[med_cols].apply(lambda row: row.isin(['up', 'down']).sum(), axis=1)
+
+    # Binary helper features
+    df['any_medication_change'] = (df['num_adjusted_medications'] > 0).astype(int)
+    df['on_insulin'] = (df['insulin'] != 'no').astype(int)
+
+    return df
+
+# Load data and return dataframe
 def load_data():
 
     data_url = 'data/diabetic_data.csv'
@@ -62,6 +97,9 @@ def load_data():
     df['readmitted'] = df['readmitted'].apply(lambda x: 1 if x=='<30' else 0 )
 
     df = df.drop(columns=['encounter_id', 'patient_nbr'], errors='ignore')
+
+    df = engineer_features(df)
+    
     return df
 
 def train_model(df):
@@ -76,7 +114,15 @@ def train_model(df):
         'number_outpatient',
         'number_emergency',
         'number_inpatient',
-        'number_diagnoses'
+        'number_diagnoses',
+        'total_previous_visits',
+        'had_previous_inpatient',
+        'avg_medications_per_day',
+        'procedure_to_lab_ratio',
+        'num_medications_used',
+        'num_adjusted_medications',
+        'any_medication_change',
+        'on_insulin'
     ]
 
     categorical = [
@@ -133,7 +179,6 @@ def save_model(filename, model):
     with open(filename, 'wb') as f_out:
         pickle.dump(model, f_out)
 
-    # print('model saved to', filename)
     print(f'model saved to {filename}')
 
 df = load_data()
