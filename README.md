@@ -210,6 +210,7 @@ curl http://localhost:9696/predict
 
   - Test https://hospital-readmission-prediction-14p1.onrender.com/predict
 
+![alt text](https://github.com/[blessi]/[reponame]/blob/[branch]/image.jpg?raw=true)
 ---
 
 
